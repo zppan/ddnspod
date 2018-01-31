@@ -1,1 +1,3 @@
-ddnspod/__init__.pyc
+*.py[cod]
+*.egg-info
+dist
