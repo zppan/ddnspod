@@ -26,7 +26,6 @@ def getdomainid(idtoken, domain):
     for item in resp.json()['domains']:
         if item['name'] == domain:
             id = item['id']
-    #id = resp.json()['domains'][0]['id']
     logging.info('Domain ID: %s'% id)
     return id
 
@@ -40,7 +39,9 @@ def getrecordid(idtoken, domain_id, sub_domain):
     headers = {'Content-type': 'application/x-www-form-urlencoded', 'Accept': 'text/json', 'User-Agent': 'dnspod-python/0.01 (pzping@gmail.com)'}
     resp = requests.post('https://dnsapi.cn/record.list', data = params, headers = headers)
     logging.debug(json.dumps(resp.json(), indent = 1))
-    id = resp.json()['records'][0]['id']
+    for item in resp.json()['records']:
+        if item['name'] == sub_domain:
+            id = item['id']
     logging.info('Record ID: %s'% id)
     return id
 
@@ -57,7 +58,7 @@ def updns(idtoken, sub_domain, domain_id, record_id, ip):
     headers = {'Content-type': 'application/x-www-form-urlencoded', 'Accept': 'text/json', 'User-Agent': 'dnspod-python/0.01 (pzping@gmail.com)'}
     resp = requests.post('https://dnsapi.cn/record.ddns', data = params, headers = headers)
     logging.info('%d %s' % (resp.status_code,resp.reason))
-    print json.dumps(resp.json(), indent = 1)
+    logging.debug(json.dumps(resp.json(), indent = 1))
     return resp.status_code == 200
     #conn = httplib.HTTPSConnection('dnsapi.cn')
     #conn.request('POST', '/Record.Ddns', urllib.urlencode(params), headers)
@@ -78,28 +79,29 @@ def getip():
 
 
 def main(filename):
-    current_ip = None
-
     with open(filename,'r') as jfile:
         dconf = json.load(jfile)
 
     idtoken = '{id},{token}'.format(id = dconf['id'], token = dconf['token'])
-    domain_id = getdomainid(idtoken, dconf['domain'])
-    record_id = getrecordid(idtoken, domain_id, dconf['sub_domain'])
+    domain = dconf['domain']
+    sub_domain = dconf['sub_domain']
+    domain_id = getdomainid(idtoken, domain)
+    record_id = getrecordid(idtoken, domain_id, sub_domain)
+    current_ip = None
 
-    #while True:
-    #    try:
-    #        ip = getip()
-    #        logging.info('IP: %s' % ip)
-    #        #if current_ip != ip:
-    #        #    if updns(idtoken, dconf['sub_domain'], domain_id, record_id, ip):
-    #        #        current_ip = ip
-    #        #    else:
-    #        #        logging.info('updnspod error')
-    #    except Exception as e:
-    #        print e
-    #        pass
-    #    time.sleep(60)
+    while True:
+        try:
+            ip = getip()
+            logging.info('IP: %s' % ip)
+            if current_ip != ip:
+                if updns(idtoken, sub_domain, domain_id, record_id, ip):
+                    current_ip = ip
+                else:
+                    logging.info('updnspod error')
+        except Exception as e:
+            print e
+            pass
+        time.sleep(60)
     pass
 
 
