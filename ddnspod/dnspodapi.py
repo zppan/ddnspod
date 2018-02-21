@@ -26,7 +26,7 @@ def getdomainid(idtoken, domain):
     for item in resp.json()['domains']:
         if item['name'] == domain:
             id = item['id']
-    logging.info('Domain ID: %s'% id)
+    logging.info('Domain ID: {}'.format(id))
     return id
 
 def getrecordid(idtoken, domain_id, sub_domain):
@@ -42,7 +42,7 @@ def getrecordid(idtoken, domain_id, sub_domain):
     for item in resp.json()['records']:
         if item['name'] == sub_domain:
             id = item['id']
-    logging.info('Record ID: %s'% id)
+    logging.info('Record ID: {}'.format(id))
     return id
 
 def updns(idtoken, sub_domain, domain_id, record_id, ip):
@@ -57,7 +57,7 @@ def updns(idtoken, sub_domain, domain_id, record_id, ip):
             )
     headers = {'Content-type': 'application/x-www-form-urlencoded', 'Accept': 'text/json', 'User-Agent': 'dnspod-python/0.01 (pzping@gmail.com)'}
     resp = requests.post('https://dnsapi.cn/record.ddns', data = params, headers = headers)
-    logging.info('%d %s' % (resp.status_code,resp.reason))
+    logging.info('{} {}'.format(resp.status_code,resp.reason))
     logging.debug(json.dumps(resp.json(), indent = 1))
     return resp.status_code == 200
     #conn = httplib.HTTPSConnection('dnsapi.cn')
@@ -92,7 +92,7 @@ def main(filename):
     while True:
         try:
             ip = getip()
-            logging.info('IP: %s' % ip)
+            logging.info('IP: {}'.format(ip))
             if current_ip != ip:
                 if updns(idtoken, sub_domain, domain_id, record_id, ip):
                     current_ip = ip
